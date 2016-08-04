@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+require "chip8"
+
+require "pry"
+Pry.start
