@@ -5,8 +5,11 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 require 'chip8'
 
-ROM = '/home/sharparam/roms/ch8/TETRIS.ch8'
+rom = ARGV[0]
 
-int = Chip8::Interpreter.new ROM
-
-int.start
+if rom
+  int = Chip8::Interpreter.new rom
+  int.start
+else
+  puts 'No ROM file specified!'
+end
