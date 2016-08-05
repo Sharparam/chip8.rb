@@ -10,7 +10,11 @@ module Chip8
 
     PROGRAM_OFFSET = 0x200
 
-    CPU_DELAY = 0.016
+    CPU_DELAY = 0.001
+
+    DELAY_STEP = 0.001
+
+    DELAY_STEP_MOD = 5
 
     def initialize(file)
       @log = Logging.get_logger 'interpreter'
@@ -21,15 +25,17 @@ module Chip8
       @input = Chip8::Input.new
       @cpu = CPU::Processor.new @mem, STACK_OFFSET, @input
 
+      @cpu_delay = CPU_DELAY
+
       load file
     end
 
     def load(file)
-      program = Program.new file
+      @program = Program.new file
 
       offset = PROGRAM_OFFSET
 
-      program.each_as_array do |arr|
+      @program.each_as_array do |arr|
         @mem.write_array arr, offset
         offset += 2
       end
@@ -38,14 +44,21 @@ module Chip8
     end
 
     def start
+      @last_tick = Time.now
       @cpu_thread = Thread.new { cpu_loop }
       sdl_loop
     end
 
+    def disassemble(out)
+      Disassembler.disassemble @program, out
+    end
+
     def cpu_loop
       loop do
-        @cpu.tick
-        sleep CPU_DELAY
+        elapsed = (Time.now - @last_tick) * 1000
+        @cpu.tick elapsed
+        @last_tick = Time.now
+        sleep @cpu_delay
       end
     rescue => e
       @log.error 'CPU loop died with error'
@@ -59,7 +72,18 @@ module Chip8
           when SDL::Event::KeyDown
             exit if event.sym == SDL::Key::ESCAPE
 
-            @input.on_down event.sym
+            handled = @input.on_down event.sym
+
+            break if handled
+
+            shift = (event.mod & SDL::Key::MOD_LSHIFT) == SDL::Key::MOD_LSHIFT
+
+            case event.sym
+            when SDL::Key::F1
+              mod_speed -DELAY_STEP * (shift ? DELAY_STEP_MOD : 1)
+            when SDL::Key::F2
+              mod_speed DELAY_STEP * (shift ? DELAY_STEP_MOD : 1)
+            end
           when SDL::Event::KeyUp
             @input.on_up event.sym
           when SDL::Event::Quit
@@ -87,6 +111,12 @@ module Chip8
 
     def init_sdl
       SDL.init SDL::INIT_VIDEO | SDL::INIT_AUDIO
+    end
+
+    def mod_speed(amount)
+      @cpu_delay += amount
+      @cpu_delay = 0 if @cpu_delay < 0
+      @log.info "CPU delay set to #{@cpu_delay}"
     end
   end
 end

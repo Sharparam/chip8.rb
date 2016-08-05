@@ -5,11 +5,20 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 require 'chip8'
 
-rom = ARGV[0]
+rom = ARGV.size == 3 ? ARGV[2] : ARGV[0]
 
-if rom
+mode = ARGV[0] == '-d' ? :debug : :run
+
+out = ARGV[1] if mode == :debug
+
+if rom && File.exist?(rom)
   int = Chip8::Interpreter.new rom
-  int.start
+  case mode
+  when :run
+    int.start
+  when :debug
+    int.disassemble out
+  end
 else
   puts 'No ROM file specified!'
 end
