@@ -3,8 +3,10 @@ source 'https://rubygems.org'
 gem 'rake', '~> 10.0'
 
 gem 'rubysdl', '~> 2.2'
-gem 'curses', '~> 1.0'
-gem 'radspberry', github: 'Sharparam/radspberry'
+
+# taf2's version of wavefile allows reading/writing
+# from IO streams and not just physical files.
+gem 'wavefile', github: 'taf2/wavefile'
 
 group :development do
   gem 'pry', '~> 0.10'
