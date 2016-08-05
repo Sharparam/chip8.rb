@@ -44,7 +44,7 @@ module Chip8
       @state[key] = true
       @last_key = key
       ev = @key_event
-      ev.broadcast if ev
+      ev.set if ev
     end
 
     def on_up(key)
