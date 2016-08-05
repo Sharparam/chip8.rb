@@ -342,7 +342,7 @@ module Chip8
         x = decode(instr, :x)
         offset = Interpreter::SPRITE_OFFSET
         size = Graphics::Sprites::STANDARD_SIZE
-        @regs.i = offset + size * x
+        @regs.i = offset + size * @regs[x]
       end
 
       # Store a BCD representation of Vx in memory locations
