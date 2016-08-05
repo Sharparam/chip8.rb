@@ -40,16 +40,18 @@ module Chip8
     end
 
     def on_down(key)
-      return unless KEYMAP.value? key
+      return false unless KEYMAP.value? key
       @state[key] = true
       @last_key = key
       ev = @key_event
       ev.set if ev
+      true
     end
 
     def on_up(key)
-      return unless KEYMAP.value? key
+      return false unless KEYMAP.value? key
       @state[key] = false
+      true
     end
   end
 end
