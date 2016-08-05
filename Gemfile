@@ -2,6 +2,7 @@ source 'https://rubygems.org'
 
 gem 'rake', '~> 10.0'
 
+gem 'rubysdl', '~> 2.2'
 gem 'curses', '~> 1.0'
 gem 'radspberry', github: 'Sharparam/radspberry'
 

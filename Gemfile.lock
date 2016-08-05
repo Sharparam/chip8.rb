@@ -41,6 +41,7 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.5.0)
     rspec-support (3.5.0)
+    rubysdl (2.2.0)
     slop (3.6.0)
     yard (0.9.5)
 
@@ -53,6 +54,7 @@ DEPENDENCIES
   radspberry!
   rake (~> 10.0)
   rspec (~> 3.0)
+  rubysdl (~> 2.2)
   yard (~> 0.9)
 
 BUNDLED WITH

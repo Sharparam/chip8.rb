@@ -1,3 +1,12 @@
 #!/usr/bin/env ruby
 
+lib = File.expand_path('../../lib', __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+
 require 'chip8'
+
+ROM = '/home/sharparam/roms/ch8/TETRIS.ch8'
+
+int = Chip8::Interpreter.new ROM
+
+int.start
