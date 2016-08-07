@@ -6,49 +6,20 @@ module Chip8
       # The timers should run at 60 Hz (16ms).
       TIMER_DELAY = 16
 
-      OPCODES = [
-        { mask: 0xFFFF, match: 0x00E0, type:  nil, handler: :cls },      # 00E0: CLS
-        { mask: 0xFFFF, match: 0x00EE, type:  nil, handler: :ret },      # 00EE: RET
-        { mask: 0xF000, match: 0x1000, type: :nnn, handler: :jp },       # 1nnn: JP   addr
-        { mask: 0xF000, match: 0x2000, type: :nnn, handler: :call },     # 2nnn: CALL addr
-        { mask: 0xF000, match: 0x3000, type: :xkk, handler: :se_b },     # 3xkk: SE     Vx, byte
-        { mask: 0xF000, match: 0x4000, type: :xkk, handler: :sne_b },    # 4xkk: SNE    Vx, byte
-        { mask: 0xF00F, match: 0x5000, type:  :xy, handler: :se_r },     # 5xy0: SE     Vx,   Vy
-        { mask: 0xF000, match: 0x6000, type: :xkk, handler: :ld_b },     # 6xkk: LD     Vx, byte
-        { mask: 0xF000, match: 0x7000, type: :xkk, handler: :add_b },    # 7xkk: ADD    Vx, byte
-        { mask: 0xF00F, match: 0x8000, type:  :xy, handler: :ld_r },     # 8xy0: LD     Vx,   Vy
-        { mask: 0xF00F, match: 0x8001, type:  :xy, handler: :or },       # 8xy1: OR     Vx,   Vy
-        { mask: 0xF00F, match: 0x8002, type:  :xy, handler: :and },      # 8xy2: AND    Vx,   Vy
-        { mask: 0xF00F, match: 0x8003, type:  :xy, handler: :xor },      # 8xy3: XOR    Vx,   Vy
-        { mask: 0xF00F, match: 0x8004, type:  :xy, handler: :add_r },    # 8xy4: ADD    Vx,   Vy
-        { mask: 0xF00F, match: 0x8005, type:  :xy, handler: :sub },      # 8xy5: SUB    Vx,   Vy
-        { mask: 0xF00F, match: 0x8006, type:   :x, handler: :shr },      # 8xy6: SHR    Vx{, Vy}
-        { mask: 0xF00F, match: 0x8007, type:  :xy, handler: :subn },     # 8xy7: SUBN   Vx,   Vy
-        { mask: 0xF00F, match: 0x800E, type:   :x, handler: :shl },      # 8xyE: SHL    Vx{, Vy}
-        { mask: 0xF00F, match: 0x9000, type:  :xy, handler: :sne_r },    # 9xy0: SNE    Vx,   Vy
-        { mask: 0xF000, match: 0xA000, type: :nnn, handler: :ld_i },     # Annn: LD      I, addr
-        { mask: 0xF000, match: 0xB000, type: :nnn, handler: :jp_0 },     # Bnnn: JP     V0, addr
-        { mask: 0xF000, match: 0xC000, type: :xkk, handler: :rnd },      # Cxkk: RND    Vx, byte
-        { mask: 0xF000, match: 0xD000, type: :xyn, handler: :drw },      # Dxyn: DRW    Vx,   Vy, nibble
-        { mask: 0xF0FF, match: 0xE09E, type:   :x, handler: :skp },      # Ex9E: SKP    Vx
-        { mask: 0xF0FF, match: 0xE0A1, type:   :x, handler: :sknp },     # ExA1: SKNP   Vx
-        { mask: 0xF0FF, match: 0xF007, type:   :x, handler: :ld_dt_r },  # Fx07: LD     Vx,   DT
-        { mask: 0xF0FF, match: 0xF00A, type:   :x, handler: :ld_k },     # Fx0A: LD     Vx,    K
-        { mask: 0xF0FF, match: 0xF015, type:   :x, handler: :ld_dt_w },  # Fx15: LD     DT,   Vx
-        { mask: 0xF0FF, match: 0xF018, type:   :x, handler: :ld_st },    # Fx18: LD     ST,   Vx
-        { mask: 0xF0FF, match: 0xF01E, type:   :x, handler: :add_i },    # Fx1E: ADD     I,   Vx
-        { mask: 0xF0FF, match: 0xF029, type:   :x, handler: :ld_f },     # Fx29: LD      F,   Vx
-        { mask: 0xF0FF, match: 0xF033, type:   :x, handler: :ld_bcd },   # Fx33: LD      B,   Vx
-        { mask: 0xF0FF, match: 0xF055, type:   :x, handler: :ld_arr_w }, # Fx55: LD    [I],   Vx
-        { mask: 0xF0FF, match: 0xF065, type:   :x, handler: :ld_arr_r }  # Fx65: LD     Vx,  [I]
-      ]
+      PARAM_MASKS = {
+        nnn: 0x0FFF,
+        n:   0x000F,
+        kk:  0x00FF,
+        x:   0x0F00,
+        y:   0x00F0
+      }.freeze
 
       DECODE_FUNCS = {
-        nnn: -> (i) { [i & 0xFFF] },
-        xkk: -> (i) { [(i >> 8) & 0xF, i & 0xFF] },
-        x: -> (i) { [(i >> 8) & 0xF] },
-        xy: -> (i) { [(i >> 8) & 0xF, (i >> 4) & 0xF] },
-        xyn: -> (i) { [(i >> 8) & 0xF, (i >> 4) & 0xF, i & 0xF] }
+        nnn: -> (i) { i & 0xFFF },
+        n: -> (i) { i & 0xF },
+        kk: -> (i) { i & 0xFF },
+        x: -> (i) { (i >> 8) & 0xF },
+        y: -> (i) { (i >> 4) & 0xF }
       }.freeze
 
       attr_reader :pc
@@ -70,25 +41,28 @@ module Chip8
         @pc = value & PC_MASK
       end
 
-      # Takes an instruction and a format type. The block is called
-      # with the parameterse in the order they appear in the instruction.
-      #
-      # @param instruction [Fixnum] The instruction data.
-      # @param type [:nnn, :xkk, :xy, :xyn] The parameter format of the
-      #   instruction.
-      # @yield [*params]
-      def self.decode(instruction, type, &block)
-        params = DECODE_FUNCS[type].call(instruction)
-        pstr = params.is_a?(Array) ? params.map { |e| e.to_s(16) }.join(', ') : params.to_s(16)
-        block ? block.call(*params) : params
+      def self.decode(instruction, params)
+        params.map { |p| DECODE_FUNCS[p].call(instruction) }
       end
 
       def self.parse(instruction)
-        entry = OPCODES.find { |e| (e[:mask] & instruction) == e[:match] }
+        raise InstructionError.new(instruction) if @instructions.nil?
+
+        entry = @instructions.find do |id, data|
+          (data[:mask] & instruction) == id
+        end
 
         raise InstructionError.new(instruction) if entry.nil?
 
-        entry
+        entry.last
+      end
+
+      def self.instruction(id, *args, &block)
+        (@instructions ||= {})[id] = {
+          mask: 0xFFFF & ~(args.reduce(0) { |a, e| a |= PARAM_MASKS[e] }),
+          params: args,
+          handler: block
+        }
       end
 
       def tick(elapsed)
@@ -108,30 +82,22 @@ module Chip8
         instr = next_instr
         increment_pc!
         data = self.class.parse instr
-        meth = data[:handler]
-        type = data[:type]
-        type.nil? ? send(meth) : send(meth, *self.class.decode(instr, type))
+        instance_exec(*self.class.decode(instr, data[:params]), &data[:handler])
       end
 
       # Clear the screen.
-      def cls
-        @display.clear
-      end
+      instruction(0x00E0) { @display.clear }
 
       # Return from subroutine.
-      def ret
-        self.pc = @stack.pop
-      end
+      instruction(0x00EE) { self.pc = @stack.pop }
 
       # Jump to an address.
-      def jp(addr)
-        self.pc = addr
-      end
+      instruction(0x1000, :nnn) { |addr| self.pc = addr }
 
       # Call a subroutine. Like #jp except the current value
       # of @pc is pushed on stack to return later.
-      def call(addr)
-        @stack.push pc
+      instruction 0x2000, :nnn do |addr|
+        @stack.push self.pc
         self.pc = addr
       end
 
@@ -139,7 +105,7 @@ module Chip8
       #
       # #se_b compares a register with an immediate byte value,
       # and skips the next instruction if they are equal.
-      def se_b(x, byte)
+      instruction 0x3000, :x, :kk do |x, byte|
         increment_pc! if @regs[x] == byte
       end
 
@@ -147,7 +113,7 @@ module Chip8
       #
       # #sne_b compares a register with an immediate byte value,
       # and skips the next instruction if they are *not* equal.
-      def sne_b(x, byte)
+      instruction 0x4000, :x, :kk do |x, byte|
         increment_pc! if @regs[x] != byte
       end
 
@@ -155,47 +121,35 @@ module Chip8
       #
       # #se_r compares two registers with eachother and skips the
       # next instruction if their contents are equal.
-      def se_r(x, y)
+      instruction 0x5000, :x, :y do |x, y|
         increment_pc! if @regs[x] == @regs[y]
       end
 
       # Load a byte value into a register.
-      def ld_b(x, byte)
-        @regs[x] = byte
-      end
+      instruction(0x6000, :x, :kk) { |x, byte| @regs[x] = byte }
 
       # Adds a byte value to a register.
-      def add_b(x, byte)
-        @regs[x] += byte
-      end
+      instruction(0x7000, :x, :kk) { |x, byte| @regs[x] += byte }
 
       # Copies the contents of a register into another.
-      def ld_r(x, y)
-        @regs[x] = @regs[y]
-      end
+      instruction(0x8000, :x, :y) { |x, y| @regs[x] = @regs[y] }
 
       # Performs a bitwise OR on the contents of two registers.
       # The result is stored in the first register.
-      def or(x, y)
-        @regs[x] |= @regs[y]
-      end
+      instruction(0x8001, :x, :y) { |x, y| @regs[x] |= @regs[y] }
 
       # Performs a bitwise AND on the contents of two registers.
       # The result is stored in the first register.
-      def and(x, y)
-        @regs[x] &= @regs[y]
-      end
+      instruction(0x8002, :x, :y) { |x, y| @regs[x] &= @regs[y] }
 
       # Performs a bitwise exclusive OR on the contents of two registers.
       # The results is stored in the first register.
-      def xor(x, y)
-        @regs[x] ^= @regs[y]
-      end
+      instruction(0x8003, :x, :y) { |x, y| @regs[x] ^= @regs[y] }
 
       # Adds the contents of two registers together and stores the
       # result in the first register. If the addition results in overflow,
       # VF is set to 1.
-      def add_r(x, y)
+      instruction 0x8004, :x, :y do |x, y|
         result = @regs[x] + @regs[y]
         @regs[0xF] = result > 255 ? 1 : 0
         @regs[x] = result
@@ -203,7 +157,7 @@ module Chip8
 
       # Subtracts the contents of Vy from Vx and stores the result in Vx.
       # If Vx > Vy, VF is set to 1 (*NOT* borrow).
-      def sub(x, y)
+      instruction 0x8005, :x, :y do |x, y|
         result = @regs[x] - @regs[y]
         @regs[0xF] = result < 0 ? 0 : 1
         @regs[x] = result
@@ -211,49 +165,40 @@ module Chip8
 
       # Shifts Vx right one bit. If the LSB was 1, VF is set to 1, otherwise
       # VF is set to 0.
-      def shr(x)
+      instruction 0x8006, :x do |x|
         @regs[0xF] = @regs[x] & 0x1
         @regs[x] = @regs[x] >> 1
       end
 
       # Subtracts the contents of Vx from Vy and stores the result in Vx.
       # If Vy > Vx, VF is set to 1 (*NOT* borrow).
-      def subn(x, y)
+      instruction 0x8007, :x, :y do |x, y|
         result = @regs[y] - @regs[x]
         @regs[0xF] = result < 0 ? 0 : 1
-        @regs[x] = result
       end
 
       # Shifts Vx left one bit. If the highest bit on Vx was set,
       # VF is set to 1.
-      def shl(x)
+      instruction 0x800E, :x do |x|
         @regs[0xF] = (@regs[x] & 0x80) == 0x80 ? 1 : 0
         @regs[x] = @regs[x] << 1
       end
 
       # Skip if not equal.
       # If Vx is *not* equal to Vy, the next instruction is skipped.
-      def sne_r(x, y)
-        increment_pc! if @regs[x] != @regs[y]
-      end
+      instruction(0x9000, :x, :y) { |x, y| increment_pc! if @regs[x] != @regs[y] }
 
       # Sets the `I` register to an address value.
-      def ld_i(addr)
-        @regs.i = addr
-      end
+      instruction(0xA000, :nnn) { |addr| @regs.i = addr }
 
       # Jumps to `V0 + addr`, where `addr` is the argument to this
       # instruction.
-      def jp_0(addr)
-        self.pc = @regs[0x0] + addr
-      end
+      instruction(0xB000, :nnn) { |addr| self.pc = @regs[0x0] + addr }
 
       # Sets Vx to the result of performing a bitwise AND on a random byte
       # (between 0 and 255, inclusive) and the byte argument to this
       # instruction.
-      def rnd(x, byte)
-        @regs[x] = RNG.generate & byte
-      end
+      instruction(0xC000, :x, :kk) { |x, byte| @regs[x] = RNG.generate & byte }
 
       # Displays a sprite on screen.
       #
@@ -263,7 +208,7 @@ module Chip8
       # the sprite.
       #
       # If a collision occurs with an already drawn sprite, VF is set to 1.
-      def drw(x, y, nibble)
+      instruction 0xD000, :x, :y, :n do |x, y, nibble|
         data = @mem.read_array @regs.i, nibble
         sprite = Graphics::Sprite.new data
         collided = @display.draw_sprite sprite, @regs[x], @regs[y]
@@ -271,45 +216,31 @@ module Chip8
       end
 
       # Skip next instruction if the key with value Vx is pressed.
-      def skp(x)
-        increment_pc! if @input.key_down? @regs[x]
-      end
+      instruction(0xE09E, :x) { |x| increment_pc! if @input.key_down? @regs[x] }
 
       # Skip next instruction if the key with value Vx is *not* pressed.
-      def sknp(x)
-        increment_pc! unless @input.key_down? @regs[x]
-      end
+      instruction(0xE0A1, :x) { |x| increment_pc! unless @input.key_down? @regs[x] }
 
       # Loads the value of the DT register into the Vx register.
-      def ld_dt_r(x)
-        @regs[x] = @regs.dt
-      end
+      instruction(0xF007, :x) { |x| @regs[x] = @regs.dt }
 
       # Blocks execution until a key is pressed, and then stores
       # the value of the pressed key in Vx.
-      def ld_k(x)
-        @regs[x] = @input.wait
-      end
+      instruction(0xF00A, :x) { |x| @regs[x] = @input.wait }
 
       # Copies the value in Vx into the DT register.
-      def ld_dt_w(x)
-        @regs.dt = @regs[x]
-      end
+      instruction(0xF015, :x) { |x| @regs.dt = @regs[x] }
 
       # Copies the value in Vx into the ST register.
-      def ld_st(x)
-        @regs.st = @regs[x]
-      end
+      instruction(0xF018, :x) { |x| @regs.st = @regs[x] }
 
       # Adds the contents of Vx and the `I` register together and
       # stores the result in the `I` register.
-      def add_i(x)
-        @regs.i += @regs[x]
-      end
+      instruction(0xF01E, :x) { |x| @regs.i += @regs[x] }
 
       # Sets the value of register `I` to the address in memory that
       # contains the sprite data for digit Vx.
-      def ld_f(x)
+      instruction 0xF029, :x do |x|
         offset = Interpreter::SPRITE_OFFSET
         size = Graphics::Sprites::STANDARD_SIZE
         @regs.i = offset + size * @regs[x]
@@ -317,7 +248,7 @@ module Chip8
 
       # Store a BCD representation of Vx in memory locations
       # `I`, `I + 1`, and `I + 2`.
-      def ld_bcd(x)
+      instruction 0xF033, :x do |x|
         value = @regs[x]
         @mem[@regs.i] = value / 100 # Hundreds
         @mem[@regs.i + 1] = (value % 100) / 10 # Tens
@@ -326,13 +257,13 @@ module Chip8
 
       # Store registers V0 through Vx in memory starting at the location
       # pointed to by register `I`.
-      def ld_arr_w(x)
+      instruction 0xF055, :x do |x|
         (x + 1).times { |r| @mem[@regs.i + r] = @regs[r] }
       end
 
       # Load values into registers V0 through Vx by reading data
       # from memory starting at the address pointed to by register `I`.
-      def ld_arr_r(x)
+      instruction 0xF065, :x do |x|
         (x + 1).times { |r| @regs[r] = @mem[@regs.i + r] }
       end
 

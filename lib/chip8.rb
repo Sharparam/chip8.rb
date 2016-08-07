@@ -8,7 +8,6 @@ require 'chip8/graphics'
 require 'chip8/input'
 require 'chip8/cpu'
 require 'chip8/program'
-require 'chip8/disassembler'
 
 require 'chip8/interpreter'
 

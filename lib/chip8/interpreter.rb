@@ -54,10 +54,6 @@ module Chip8
       sdl_loop
     end
 
-    def disassemble(out)
-      Disassembler.disassemble @program, out
-    end
-
     def cpu_loop
       @log.debug 'Starting CPU loop'
       loop do
