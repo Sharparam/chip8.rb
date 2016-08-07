@@ -2,6 +2,8 @@
 
 module Chip8
   class Memory
+    SIZE = 0x1000 # 4096 bytes
+
     START_INDEX = 0x000
 
     END_INDEX = 0xFFF
@@ -12,7 +14,7 @@ module Chip8
 
     def initialize
       @log = Logging.get_logger 'mem'
-      @mem = []
+      @mem = [0] * SIZE
     end
 
     def self.truncate(value)
