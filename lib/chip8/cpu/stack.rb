@@ -9,9 +9,11 @@ module Chip8
       attr_reader :depth
 
       def initialize(mem, offset)
+        @log = Logging.get_logger 'stack'
         @mem = mem
         @offset = offset
         @depth = 0
+        @log.info 'Stack initialized'
       end
 
       def sp

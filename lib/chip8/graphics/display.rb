@@ -15,14 +15,23 @@ module Chip8
       BPP = 8
 
       def initialize
+        @log = Logging.get_logger 'display'
+        @log.info 'Display is initializing'
+
         @screen = []
         WIDTH.times { |r| @screen[r] = [false] * HEIGHT }
+
+        @log.debug 'Opening SDL screen'
 
         @window = SDL::Screen.open PIXEL_SIZE * WIDTH, PIXEL_SIZE * HEIGHT, BPP,
                                    SDL::SWSURFACE | SDL::ANYFORMAT
 
+        @log.debug 'Creating colors'
+
         @white = @window.mapRGB 255, 255, 255
         @black = @window.mapRGB 0, 0, 0
+
+        @log.info 'Display initialized'
       end
 
       def [](x, y)

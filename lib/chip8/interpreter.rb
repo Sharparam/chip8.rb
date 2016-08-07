@@ -19,6 +19,8 @@ module Chip8
     def initialize(file)
       @log = Logging.get_logger 'interpreter'
 
+      @log.info 'Interpreter is initializing'
+
       init_sdl
       init_memory
 
@@ -28,6 +30,8 @@ module Chip8
       @cpu_delay = CPU_DELAY
 
       load file
+
+      @log.info 'Interpreter finished initializing'
     end
 
     def load(file)
@@ -44,6 +48,7 @@ module Chip8
     end
 
     def start
+      @log.info 'Starting ROM'
       @last_tick = Time.now
       @cpu_thread = Thread.new { cpu_loop }
       sdl_loop
@@ -54,6 +59,7 @@ module Chip8
     end
 
     def cpu_loop
+      @log.debug 'Starting CPU loop'
       loop do
         elapsed = (Time.now - @last_tick) * 1000
         @cpu.tick elapsed
@@ -66,15 +72,20 @@ module Chip8
     end
 
     def sdl_loop
+      @log.debug 'Starting SDL loop'
       loop do
         while event = SDL::Event.poll
           case event
           when SDL::Event::KeyDown
             exit if event.sym == SDL::Key::ESCAPE
 
+            @log.debug 'Sending keypress to input manager'
+
             handled = @input.on_down event.sym
 
             break if handled
+
+            @log.debug 'Keypress not handled'
 
             shift = (event.mod & SDL::Key::MOD_LSHIFT) == SDL::Key::MOD_LSHIFT
 
@@ -103,6 +114,7 @@ module Chip8
     end
 
     def init_sprites
+      @log.info 'Loading standard sprites to memory'
       Graphics::Sprites::STANDARD.each_with_index do |sprite, index|
         mem_idx = SPRITE_OFFSET + index * Graphics::Sprites::STANDARD_SIZE
         @mem.write_sprite sprite, mem_idx
@@ -110,6 +122,7 @@ module Chip8
     end
 
     def init_sdl
+      @log.info 'Initializing SDL'
       SDL.init SDL::INIT_VIDEO | SDL::INIT_AUDIO
     end
 

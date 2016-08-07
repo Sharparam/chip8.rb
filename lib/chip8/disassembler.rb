@@ -4,6 +4,8 @@ module Chip8
   module Disassembler
     class << self
       def disassemble(program, out)
+        log.info "Disassembling #{program.path} to #{out}"
+
         asm = []
         pos = 0x200
 
@@ -83,6 +85,14 @@ module Chip8
         File.open(out, 'w') do |file|
           file.write asm.join("\n")
         end
+
+        log.info "Wrote #{asm.size} ASM lines to #{out}"
+      end
+
+      private
+
+      def log
+        @log ||= Logging.get_logger 'disassembler'
       end
     end
   end

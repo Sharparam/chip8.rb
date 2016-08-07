@@ -55,6 +55,7 @@ module Chip8
 
       def initialize(mem, stack_offset, input)
         @log = Logging.get_logger 'cpu'
+        @log.info 'Initializing CPU'
         @regs = Registers.new
         @mem = mem
         @stack = Stack.new @mem, stack_offset

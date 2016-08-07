@@ -14,10 +14,12 @@ module Chip8
       attr_reader :i, :dt, :st
 
       def initialize
+        @log = Logging.get_logger 'regs'
         @v = [0] * V_COUNT
         @i = 0
         @dt = 0
         @st = 0
+        @log.info 'Registers initialized'
       end
 
       def [](index)
