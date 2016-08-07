@@ -84,7 +84,6 @@ module Chip8
       end
 
       def self.parse(instruction)
-        #entry = OPCODE_MAP.find { |mask, _| (mask & instruction) == mask }
         entry = OPCODES.find { |e| (e[:mask] & instruction) == e[:match] }
 
         raise InstructionError.new(instruction) if entry.nil?
